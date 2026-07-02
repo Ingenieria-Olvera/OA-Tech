@@ -1,0 +1,614 @@
+/* ==========================================================================
+   OA-TECH — one continuous palette, read forwards (day) or in reverse (night)
+   ========================================================================== */
+
+:root {
+  /* The five palette colors — never substituted, only re-read. */
+  --p-lightest: #f3f2fd;
+  --p-light:    #e6e4fb;
+  --p-mid:      #ceccf8;
+  --p-accent:   #afafe7;
+  --p-ink:      #130f34;
+
+  /* Type roles — strictly separated. */
+  --font-display: 'Unbounded', system-ui, sans-serif;
+  --font-body: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Trace geometry. --rail-a / --rail-b are the two x-positions the trace
+     weaves between; sections pick one via --trace-x. */
+  --rail-a: clamp(28px, 6vw, 88px);
+  --rail-b: clamp(52px, 11vw, 168px);
+  --content-pad: clamp(72px, 16vw, 260px);
+}
+
+/* Day work — the palette read forwards. */
+[data-theme='light'] {
+  --bg: var(--p-lightest);
+  --surface: var(--p-light);
+  --line-quiet: var(--p-mid);
+  --accent: var(--p-accent);
+  --text: var(--p-ink);
+  --text-soft: color-mix(in srgb, var(--p-ink) 72%, var(--p-lightest));
+  --surface-line: color-mix(in srgb, var(--p-mid) 70%, transparent);
+}
+
+/* Night work — the same five colors read in reverse. Panels and quiet lines
+   are alpha blends of the same palette, not new hues. */
+[data-theme='dark'] {
+  --bg: var(--p-ink);
+  --surface: color-mix(in srgb, var(--p-accent) 10%, var(--p-ink));
+  --line-quiet: color-mix(in srgb, var(--p-mid) 26%, transparent);
+  --accent: var(--p-accent);
+  --text: var(--p-lightest);
+  --text-soft: color-mix(in srgb, var(--p-lightest) 74%, var(--p-ink));
+  --surface-line: color-mix(in srgb, var(--p-mid) 22%, transparent);
+}
+
+/* ------------------------------------------------------------------ base */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.8s ease, color 0.8s ease;
+  overflow-x: hidden;
+}
+
+/* While the LED toggle blinks, every color on the page eases between the two
+   readings of the palette — the hue change smooths in rather than snapping. */
+html.theme-smooth *,
+html.theme-smooth *::before,
+html.theme-smooth *::after {
+  transition:
+    background-color 0.8s ease,
+    color 0.8s ease,
+    border-color 0.8s ease,
+    fill 0.8s ease,
+    stroke 0.8s ease,
+    box-shadow 0.8s ease !important;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 0.78em;
+  letter-spacing: 0.08em;
+}
+
+a { color: var(--accent); text-decoration-color: color-mix(in srgb, var(--accent) 50%, transparent); text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--accent); }
+
+::selection { background: var(--accent); color: var(--p-ink); }
+
+.skip-link {
+  position: absolute; left: -9999px; top: 0;
+  background: var(--accent); color: var(--p-ink);
+  padding: 0.5rem 1rem; z-index: 100; font-family: var(--font-mono);
+}
+.skip-link:focus { left: 0; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* ------------------------------------------------------------ site head */
+
+.site-head {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem clamp(1.25rem, 4vw, 2.5rem);
+  z-index: 50;
+  pointer-events: none; /* only the children take clicks */
+}
+.site-head__mark {
+  font-size: 0.85rem;
+  letter-spacing: 0.22em;
+  color: var(--text-soft);
+}
+.theme-toggle {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--surface-line);
+  border-radius: 999px;
+  color: var(--text-soft);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.25s ease, color 0.25s ease;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--text); }
+
+/* The LED schematic symbol. Night work = LED on (die filled, rays out);
+   day work = LED off (outline only). It blinks when the mode flips. */
+.led { width: 26px; height: 22px; overflow: visible; flex-shrink: 0; }
+.led line, .led polyline {
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.led__die {
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  fill: var(--accent);
+  fill-opacity: 0;
+  transition: fill-opacity 0.5s ease;
+}
+.led__rays line, .led__rays polyline { stroke: var(--accent); }
+.led__rays { opacity: 0; transition: opacity 0.5s ease; }
+[data-theme='dark'] .led__die { fill-opacity: 1; }
+[data-theme='dark'] .led__rays { opacity: 1; }
+.led.blink .led__die { animation: led-flicker 0.8s linear; }
+.led.blink .led__rays { animation: rays-flicker 0.8s linear; }
+@keyframes led-flicker {
+  0% { fill-opacity: 0; }
+  15% { fill-opacity: 1; }
+  30% { fill-opacity: 0.1; }
+  50% { fill-opacity: 1; }
+  65% { fill-opacity: 0.25; }
+  85%, 100% { fill-opacity: 1; }
+}
+@keyframes rays-flicker {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  30% { opacity: 0; }
+  50% { opacity: 0.8; }
+  65% { opacity: 0.15; }
+  85%, 100% { opacity: 1; }
+}
+
+/* ----------------------------------------------------------- trace layer */
+
+.trace-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+.trace-layer svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+.trace-base {
+  fill: none;
+  stroke: var(--line-quiet);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.trace-flow {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 60%, transparent));
+}
+.trace-fork {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Via markers at each project transition — a pad drilled into the trace.
+   Positioned by trace.js to sit exactly on the path. */
+.via-marker {
+  position: absolute;
+  left: var(--trace-x, var(--rail-a));
+  width: 14px; height: 14px;
+  transform: translate(-50%, 0);
+  border-radius: 50%;
+  background: var(--bg);
+  border: 3px solid var(--line-quiet);
+  transition: border-color 0.5s ease, background-color 0.5s ease;
+  z-index: 2;
+}
+.via-marker::after {
+  content: '';
+  position: absolute; inset: 2px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background-color 0.5s ease;
+}
+.via-marker.lit { border-color: var(--accent); }
+.via-marker.lit::after { background: var(--accent); }
+.via-marker.lit.pulse::before {
+  content: '';
+  position: absolute; inset: -3px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  animation: via-pulse 1.1s ease-out 2;
+}
+@keyframes via-pulse {
+  from { transform: scale(1); opacity: 0.9; }
+  to   { transform: scale(2.6); opacity: 0; }
+}
+
+.trace-point { position: absolute; width: 0; height: 0; }
+
+/* -------------------------------------------------------------- sections */
+
+main { position: relative; z-index: 1; }
+
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 6rem clamp(1.5rem, 6vw, 4rem) 9rem;
+}
+.hero .trace-point { left: 50%; bottom: 0; top: auto; }
+.hero__title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(2.6rem, 10vw, 8rem);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  margin: 1.4rem 0 2rem;
+}
+.hero__body {
+  max-width: 38em;
+  color: var(--text-soft);
+}
+.hero__cue {
+  margin-top: 4.5rem;
+  color: var(--accent);
+  letter-spacing: 0.2em;
+  font-size: 0.72rem;
+}
+
+/* Resume block on the landing — documentation data, so it's mono. */
+.resume {
+  margin-top: 2.6rem;
+  width: min(100%, 46em);
+  text-align: left;
+  border-top: 1px solid var(--surface-line);
+}
+.resume__row {
+  display: grid;
+  grid-template-columns: 5.5em 1fr;
+  gap: 1rem;
+  padding: 0.65rem 0.2rem;
+  border-bottom: 1px solid var(--surface-line);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+}
+.resume__row dt { color: var(--accent); }
+.resume__row dd { color: var(--text-soft); }
+.resume__row a { color: var(--text-soft); }
+.resume__row a:hover { color: var(--accent); }
+
+/* Organization / sponsorship attribution chips in project headers. */
+.orgs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.1rem; }
+.org-chip {
+  display: inline-block;
+  padding: 0.32rem 0.75rem;
+  border: 1px solid var(--surface-line);
+  border-radius: 999px;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--text-soft);
+}
+.org-chip--org {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.org-chip--slot {
+  border-style: dashed;
+  opacity: 0.75;
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+}
+
+.project {
+  --sec-pad: clamp(6rem, 14vh, 11rem);
+  position: relative;
+  padding: var(--sec-pad) clamp(1.5rem, 5vw, 4rem);
+  padding-left: var(--content-pad);
+  max-width: 1200px;
+}
+.project .trace-point,
+.project .via-marker { top: calc(var(--sec-pad) + 0.45em); }
+.project .trace-point { left: var(--trace-x, var(--rail-a)); }
+.project__head { margin-bottom: 2.2rem; }
+.project__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.2rem, 7vw, 5rem);
+  line-height: 1.05;
+  margin-top: 0.5rem;
+}
+.project__body { max-width: 40em; }
+.project__body p + p { margin-top: 1.2em; }
+.project__body > * + * { margin-top: 2.2rem; }
+
+/* Lineage lines — the hand-off from one project to the next. */
+.lineage {
+  max-width: 34em;
+  margin-top: 4.5rem;
+  padding-left: 1.4rem;
+  border-left: 3px solid var(--accent);
+  color: var(--text-soft);
+  font-style: italic;
+}
+
+/* ------------------------------------------------- via bullets in lists */
+
+.vias {
+  list-style: none;
+  position: relative;
+  padding-left: 2rem;
+}
+/* the short stub of trace the vias are drilled into */
+.vias::before {
+  content: '';
+  position: absolute;
+  left: 5px; top: 0.9em; bottom: 0.9em;
+  width: 3px;
+  background: var(--line-quiet);
+  border-radius: 2px;
+}
+.vias li { position: relative; padding: 0.35em 0; color: var(--text-soft); }
+.vias li::before {
+  content: '';
+  position: absolute;
+  left: calc(-2rem + 2px); top: 0.78em;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent);
+}
+.vias .mono { color: var(--text); }
+
+/* ------------------------------------------------------- image placeholders */
+
+.media { max-width: 40em; }
+.media__ph {
+  aspect-ratio: 3 / 2;
+  background: var(--surface);
+  border: 1px solid var(--surface-line);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+}
+.media__ph--wide { aspect-ratio: 16 / 9; }
+.media__note {
+  color: var(--text-soft);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+}
+.media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid var(--surface-line);
+}
+.media figcaption {
+  margin-top: 0.7rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  color: var(--text-soft);
+}
+
+/* -------------------------------------------------------- featured / 3D */
+
+.project--featured { max-width: none; padding-right: 0; }
+.project--featured .project__head,
+.project--featured .project__body,
+.project--featured .lineage { max-width: 40em; }
+
+.via-marker--featured { width: 18px; height: 18px; }
+
+.viewer-hint { color: var(--accent); letter-spacing: 0.2em; font-size: 0.72rem; }
+
+.viewer-stage {
+  position: relative;
+  height: 100svh;
+  width: 100vw;
+  margin-left: calc(-1 * var(--content-pad));
+  overflow: hidden;
+}
+.viewer-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.viewer-fallback {
+  position: absolute;
+  inset: 12% 8%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--surface-line);
+  border-radius: 8px;
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+}
+.viewer-fallback__sub { opacity: 0.7; letter-spacing: 0.1em; }
+/* the hidden attribute must win over the display:flex above */
+.viewer-fallback[hidden] { display: none; }
+
+.callout {
+  position: absolute;
+  left: 0; top: 0;
+  max-width: 240px;
+  padding: 0.45rem 0.7rem;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.callout__tick {
+  position: absolute;
+  left: -26px; top: 50%;
+  width: 24px; height: 2px;
+  background: var(--accent);
+}
+
+/* ----------------------------------------------------- about / freelance */
+
+.about,
+.freelance {
+  --sec-pad: clamp(6rem, 14vh, 11rem);
+  position: relative;
+  padding: var(--sec-pad) clamp(1.5rem, 5vw, 4rem);
+  padding-left: var(--content-pad);
+  max-width: 1200px;
+}
+.about { --trace-x: var(--rail-b); }
+.freelance { --trace-x: var(--rail-a); }
+.about .trace-point,
+.freelance .trace-point,
+.about .via-marker,
+.freelance .via-marker {
+  top: calc(var(--sec-pad) + 0.45em);
+}
+.about .trace-point,
+.freelance .trace-point {
+  left: var(--trace-x, var(--rail-a));
+}
+
+.about__title,
+.freelance__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 6vw, 4.2rem);
+  line-height: 1.08;
+  margin: 0.5rem 0 1.8rem;
+}
+.about__body { max-width: 40em; }
+.about__body p + p { margin-top: 1.2em; }
+
+.freelance__cta { margin-top: 2.4rem; }
+.cta-link {
+  display: inline-block;
+  padding: 0.85rem 1.4rem;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-decoration: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.cta-link:hover {
+  background: var(--accent);
+  color: var(--p-ink);
+}
+
+.vias strong { color: var(--text); font-weight: 500; }
+
+/* ----------------------------------------------------------------- outro */
+
+.outro {
+  position: relative;
+  min-height: 90svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 8rem clamp(1.5rem, 6vw, 4rem) 4rem;
+}
+.outro .trace-point { left: 50%; top: 0; }
+.outro__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 6vw, 4.4rem);
+  line-height: 1.08;
+  margin: 1.4rem 0 1.8rem;
+}
+.outro__body { max-width: 34em; color: var(--text-soft); }
+.outro__contact { margin-top: 2rem; font-size: 1.1rem; }
+.site-foot {
+  margin-top: 7rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  color: var(--text-soft);
+}
+.site-foot a { color: var(--text-soft); }
+.site-foot a:hover { color: var(--accent); }
+
+/* ------------------------------------------------------------- reveals */
+
+/* Reveals only hide content when JS is running (html.js is set in <head>),
+   so a script failure never leaves the page blank. */
+html.js .reveal { opacity: 0; }
+html.js.no-motion .reveal { opacity: 1; }
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 720px) {
+  :root {
+    --rail-a: 22px;
+    --rail-b: 40px;
+    --content-pad: 68px;
+  }
+  .callout { max-width: 170px; font-size: 0.58rem; }
+  .lineage { margin-top: 3rem; }
+}
+
+/* ------------------------------------------------------- trace exit anchors
+   Exit anchors sit at each section's bottom edge so rail-to-rail jogs are
+   routed through the whitespace between sections, never through content.
+   This rule must come after the per-section .trace-point rules — it wins
+   the equal-specificity tie to reset `top`. */
+.project .trace-point--exit,
+.about .trace-point--exit,
+.freelance .trace-point--exit {
+  top: auto;
+  bottom: clamp(1.5rem, 4vh, 2.5rem);
+  left: var(--trace-x, var(--rail-a));
+}
+
+/* --------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

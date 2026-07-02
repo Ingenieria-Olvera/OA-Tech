@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OA-Tech — Jonathan Olvera, Research Archive</title>
+  <meta name="description" content="OA-Tech is the independent R&D practice of Jonathan Olvera — electrical engineering student, production engineer, and maker. A living archive of hardware, firmware, and robotics work." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%23afafe7'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%23afafe7' stroke-width='2.5'/%3E%3C/svg%3E" />
+
+  <!-- Set theme before first paint. Dark is "home"; an explicit light-mode
+       OS preference (or a saved choice) is respected. -->
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem('oa-theme'); } catch (e) {}
+      var theme = saved
+        || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.classList.add('js');
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('no-motion');
+      }
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800;900&family=Space+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body>
+
+  <a class="skip-link" href="#content">Skip to content</a>
+
+  <!-- Minimal fixed header: wordmark + LED theme toggle. No nav — the scroll is the navigation. -->
+  <header class="site-head">
+    <span class="site-head__mark mono">OA-TECH</span>
+    <button id="theme-toggle" class="theme-toggle mono" type="button" aria-live="polite">
+      <!-- LED schematic symbol: anode wire, die (triangle), cathode bar, emission rays -->
+      <svg class="led" viewBox="0 0 26 22" aria-hidden="true">
+        <line class="led__wire" x1="0" y1="13" x2="5" y2="13" />
+        <polygon class="led__die" points="5,7 5,19 16,13" />
+        <line class="led__bar" x1="16" y1="7" x2="16" y2="19" />
+        <line class="led__wire" x1="16" y1="13" x2="26" y2="13" />
+        <g class="led__rays">
+          <line x1="12" y1="5.5" x2="16" y2="1.5" />
+          <polyline points="13.4,1.5 16,1.5 16,4.1" />
+          <line x1="17" y1="7.5" x2="21" y2="3.5" />
+          <polyline points="18.4,3.5 21,3.5 21,6.1" />
+        </g>
+      </svg>
+      <span class="theme-toggle__label">DAY&nbsp;WORK</span>
+    </button>
+  </header>
+
+  <!-- The trace layer sits behind all content. Its SVG path is computed in
+       src/js/trace.js from the .trace-point anchors inside each section.
+       Each section has a top anchor (the via) and a bottom exit anchor, so
+       rail-to-rail jogs always happen in the whitespace between sections. -->
+  <div class="trace-layer" aria-hidden="true">
+    <svg id="trace-svg"></svg>
+  </div>
+
+  <main id="content">
+
+    <!-- ============================================================ HERO -->
+    <section class="hero" id="top">
+      <span class="trace-point" data-trace="hero"></span>
+      <p class="eyebrow mono reveal">OA-TECH &middot; THE WORKSHOP OF JONATHAN OLVERA</p>
+      <h1 class="hero__title reveal">One maker,<br />endless fields.</h1>
+      <p class="hero__body reveal">
+        I&rsquo;m Jonathan &mdash; an electrical engineering student who spends days on a
+        real production floor and nights on my own bench. OA-Tech is my independent
+        R&amp;D practice: today it&rsquo;s the archive of everything I build; the plan is a
+        firm that companies contract when they need hard things designed, built,
+        and shipped. Until then, the work speaks first.
+      </p>
+      <dl class="resume mono reveal">
+        <div class="resume__row"><dt>STUDY</dt><dd>ELECTRICAL &amp; COMPUTER ENGINEERING &middot; UMASS AMHERST</dd></div>
+        <div class="resume__row"><dt>WORK</dt><dd>PRODUCTION ENGINEERING &middot; CIRCUITHUB</dd></div>
+        <div class="resume__row"><dt>BUILD</dt><dd>HARDWARE &middot; FIRMWARE &middot; ROBOTICS &middot; WHATEVER THE PROJECT NEEDS</dd></div>
+        <div class="resume__row"><dt>REACH</dt><dd><a href="mailto:jonnyolv102306@gmail.com">JONNYOLV102306@GMAIL.COM</a> &middot; <a href="https://github.com/Ingenieria-Olvera" rel="noopener">GITHUB/INGENIERIA-OLVERA</a></dd></div>
+      </dl>
+      <p class="hero__cue mono reveal">THE PROJECTS ARE BELOW &mdash; FOLLOW THE TRACE &darr;</p>
+    </section>
+
+    <!-- ================================================ CLEARNOTE (FEATURED) -->
+    <section class="project project--featured" id="clearnote" style="--trace-x: var(--rail-a);">
+      <span class="trace-point" data-trace="via"></span>
+      <span class="via-marker via-marker--featured" aria-hidden="true"></span>
+      <header class="project__head">
+        <p class="eyebrow mono reveal">REV&nbsp;B &middot; 2025&ndash;PRESENT &middot; ELECTRICAL / FIRMWARE</p>
+        <h2 class="project__title reveal">ClearNote</h2>
+        <p class="orgs reveal">
+          <span class="org-chip mono">INDEPENDENT &middot; OA-TECH</span>
+          <span class="org-chip org-chip--slot mono" title="Sponsorship attribution will appear here">SPONSOR SLOT &mdash; OPEN</span>
+        </p>
+      </header>
+
+      <div class="project__body">
+        <p class="reveal">
+          A digital notepad built around E-Ink, for studying without a glowing
+          rectangle begging for attention. One device, one job: paper that
+          remembers. It&rsquo;s also my research vehicle &mdash; ClearNote investigates how
+          firmware architecture and hardware design choices affect responsiveness
+          and power efficiency in a low-power E-Ink system.
+        </p>
+        <p class="reveal">
+          E-Ink is slow and the ESP32-S3&rsquo;s shared buses bottleneck easily. The
+          whole project is about refusing to accept that: a multi-layer rigid-flex
+          architecture and a deterministic FreeRTOS firmware strategy, so latency
+          is something I design, not something I get.
+        </p>
+        <p class="mono viewer-hint reveal">SCROLL &mdash; THE DEVICE COMES APART</p>
+      </div>
+
+      <!-- Pinned 3D stage. Drop the real model at public/models/clearnote.glb
+           and set MODEL_URL in src/js/viewer.js — see README. -->
+      <div class="viewer-stage" id="viewer-stage">
+        <canvas class="viewer-canvas" id="viewer-canvas" aria-label="3D exploded view of the ClearNote device stack"></canvas>
+        <div class="viewer-fallback mono" id="viewer-fallback" hidden>
+          RENDER SLOT &mdash; CLEARNOTE EXPLODED STACK<br />
+          <span class="viewer-fallback__sub">(3D unavailable on this device &mdash; a static render will live here)</span>
+        </div>
+        <div class="callout mono" data-callout="panel"><span class="callout__tick"></span>E-INK PANEL &mdash; PAPER, BUT PROGRAMMABLE</div>
+        <div class="callout mono" data-callout="board"><span class="callout__tick"></span>ESP32-S3 ON RIGID-FLEX &mdash; DETERMINISTIC FREERTOS CORE</div>
+        <div class="callout mono" data-callout="battery"><span class="callout__tick"></span>POWER BUDGET MEASURED IN WEEKS, NOT HOURS</div>
+        <div class="callout mono" data-callout="back"><span class="callout__tick"></span>BACK SHELL &mdash; CASE AND HINGE COME AFTER BRING-UP</div>
+      </div>
+
+      <div class="project__body">
+        <p class="reveal">
+          Where it stands, honestly: rev B fixes what my mentor and I caught in
+          review &mdash; a missing inductor, thin via stitching, a power-button circuit
+          I wasn&rsquo;t proud of &mdash; and went out for fabrication in July 2026. Bring-up
+          is this summer: power-on, E-Ink boot, SD card, the headphone-jack logic
+          for audio studying. The FreeRTOS-based OS and the mechanical design come
+          after the board earns them.
+        </p>
+
+        <ul class="vias reveal">
+          <li><span class="mono">ESP32-S3</span>, deterministic <span class="mono">FreeRTOS</span> task architecture</li>
+          <li>Multi-layer <span class="mono">rigid-flex</span> board &mdash; mobile-grade <span class="mono">0402/0603</span> passives</li>
+          <li>E-Ink display &middot; <span class="mono">SD</span> storage &middot; audio out for study playback</li>
+          <li>Rev B ordered <span class="mono">JUL 2026</span> &mdash; bring-up in progress</li>
+          <li>Fall plan: frame it as publishable research &mdash; <span class="mono">IEEE / SHPE</span></li>
+        </ul>
+
+        <figure class="media reveal">
+          <div class="media__ph media__ph--wide" role="img" aria-label="Photo slot: ClearNote rev B board">
+            <span class="media__note mono">PHOTO SLOT &mdash; CLEARNOTE REV B, WHEN IT ARRIVES</span>
+          </div>
+          <figcaption class="mono">FIG. CN-01 &middot; REV B &middot; RIGID-FLEX</figcaption>
+        </figure>
+      </div>
+
+      <p class="lineage reveal">
+        Designing one board carefully taught me to wonder how thousands get built
+        without ceremony. So I went and worked where that happens.
+      </p>
+      <span class="trace-point trace-point--exit" data-trace="exit"></span>
+    </section>
+
+    <!-- ====================================================== CIRCUITHUB -->
+    <section class="project" id="circuithub" style="--trace-x: var(--rail-b);">
+      <span class="trace-point" data-trace="via"></span>
+      <span class="via-marker" aria-hidden="true"></span>
+      <header class="project__head">
+        <p class="eyebrow mono reveal">2025&ndash;PRESENT &middot; PRODUCTION ENGINEERING</p>
+        <h2 class="project__title reveal">The factory floor</h2>
+        <p class="orgs reveal">
+          <span class="org-chip org-chip--org mono">WITH &middot; CIRCUITHUB</span>
+        </p>
+      </header>
+
+      <div class="project__body">
+        <p class="reveal">
+          At CircuitHub I do production engineering for the machines that build
+          electronics at scale &mdash; Mycronic <span class="mono">MY700</span> jet
+          printers and the pick-and-place line around them. School teaches you to
+          design a board; the floor teaches you everything that happens to it
+          afterward, at speed, ten thousand times.
+        </p>
+        <p class="reveal">
+          My own corner of it: I designed a build-down kit for the jet printers,
+          and I&rsquo;m inventing a labeling system so the line&rsquo;s consumables &mdash;
+          nozzles, gantries, pallets, panels, part-pickers &mdash; stop being anonymous.
+          You can&rsquo;t track wear on a thing that doesn&rsquo;t have a name.
+        </p>
+
+        <figure class="media reveal">
+          <div class="media__ph" role="img" aria-label="Photo slot: labeling system in production">
+            <span class="media__note mono">PHOTO SLOT &mdash; LABELING SYSTEM ON THE LINE</span>
+          </div>
+          <figcaption class="mono">FIG. CH-01 &middot; NAMES FOR THE NAMELESS</figcaption>
+        </figure>
+
+        <ul class="vias reveal">
+          <li>Build-down kit for the <span class="mono">MY700</span> jet printers</li>
+          <li>Labeling system &mdash; nozzles &rarr; gantries &rarr; pallets &amp; panels &rarr; <span class="mono">PPRs</span></li>
+          <li>Selective solder programming on the <span class="mono">ERSA</span></li>
+          <li>Production optimization research &mdash; unpublished, pending the company&rsquo;s blessing</li>
+        </ul>
+      </div>
+
+      <p class="lineage reveal">
+        The floor is machines talking to each other all day. Back at school, I
+        write the translations.
+      </p>
+      <span class="trace-point trace-point--exit" data-trace="exit"></span>
+    </section>
+
+    <!-- ========================================================= GIG-E -->
+    <section class="project" id="gige" style="--trace-x: var(--rail-a);">
+      <span class="trace-point" data-trace="via"></span>
+      <span class="via-marker" aria-hidden="true"></span>
+      <header class="project__head">
+        <p class="eyebrow mono reveal">2026 &middot; SOFTWARE / PROTOCOLS</p>
+        <h2 class="project__title reveal">Gig-E &harr; CAN&nbsp;FD</h2>
+        <p class="orgs reveal">
+          <span class="org-chip org-chip--org mono">WITH &middot; UMASS ROBOTICS</span>
+        </p>
+      </header>
+
+      <div class="project__body">
+        <p class="reveal">
+          Robots have a language problem: the compute side speaks Gigabit Ethernet,
+          the actuator side speaks CAN&nbsp;FD, and somebody has to translate without
+          adding latency the control loop will feel. For our club&rsquo;s Jetson-based
+          platform, that somebody is me &mdash; parsing code that bridges the two buses,
+          due before the fall build season.
+        </p>
+
+        <ul class="vias reveal">
+          <li>Gigabit Ethernet &harr; <span class="mono">CAN FD</span> bridge / parsing layer</li>
+          <li>Target platform: <span class="mono">NVIDIA Jetson</span> + CAN-FD actuators</li>
+          <li>Hard deadline: <span class="mono">SEP 2026</span> &mdash; integration before build season</li>
+        </ul>
+      </div>
+
+      <p class="lineage reveal">
+        Boards, factories, protocols &mdash; all of it is practice for the project I
+        actually daydream about. It has feathers.
+      </p>
+      <span class="trace-point trace-point--exit" data-trace="exit"></span>
+    </section>
+
+    <!-- ======================================================== PARROT -->
+    <section class="project" id="parrot" style="--trace-x: var(--rail-b);">
+      <span class="trace-point" data-trace="via"></span>
+      <span class="via-marker" aria-hidden="true"></span>
+      <header class="project__head">
+        <p class="eyebrow mono reveal">PHASE&nbsp;1 OF 4 &middot; 2026&ndash;2029 &middot; ROBOTICS / BIOMIMICRY</p>
+        <h2 class="project__title reveal">Project Parrot</h2>
+        <p class="orgs reveal">
+          <span class="org-chip mono">OA-TECH &middot; THE LONG GAME</span>
+        </p>
+      </header>
+
+      <div class="project__body">
+        <p class="reveal">
+          A robotic bird, built in phases across my entire degree. Not a drone with
+          a costume &mdash; a machine that walks, then jumps, then flies the way a bird
+          does, because biomimicry is the hardest version of every engineering
+          problem at once: actuation, balance, weight, power, control.
+        </p>
+        <p class="reveal">
+          Phase one is legs. Walking is already an honest fight &mdash; then jumping
+          with enough force to self-propel, then ornithopter flight modeled in
+          Isaac Sim before any feather touches hardware, and finally a vision
+          and navigation brain. The target isn&rsquo;t completion by graduation;
+          it&rsquo;s meaningful, documented progress. This page is the documentation.
+        </p>
+
+        <figure class="media reveal">
+          <div class="media__ph" role="img" aria-label="Image slot: Parrot leg mechanism CAD">
+            <span class="media__note mono">IMAGE SLOT &mdash; PHASE 1 LEG MECHANISM, CAD</span>
+          </div>
+          <figcaption class="mono">FIG. PT-01 &middot; WALK BEFORE YOU FLY, LITERALLY</figcaption>
+        </figure>
+
+        <ul class="vias reveal">
+          <li>Phase 1 &mdash; legs &amp; walking <span class="mono">(NOW)</span></li>
+          <li>Phase 2 &mdash; jumping: self-propulsion + balance in motion</li>
+          <li>Phase 3 &mdash; ornithopter flight, modeled first in <span class="mono">ISAAC SIM</span></li>
+          <li>Phase 4 &mdash; onboard / offboard vision &amp; navigation</li>
+        </ul>
+      </div>
+
+      <p class="lineage reveal">
+        Every project here stands on smaller, stranger ones. The archive keeps
+        those too.
+      </p>
+      <span class="trace-point trace-point--exit" data-trace="exit"></span>
+    </section>
+
+    <!-- ================================================== EARLIER WORK -->
+    <section class="project project--archive" id="earlier" style="--trace-x: var(--rail-a);">
+      <span class="trace-point" data-trace="via"></span>
+      <span class="via-marker" aria-hidden="true"></span>
+      <header class="project__head">
+        <p class="eyebrow mono reveal">2022&ndash;2025 &middot; THE ARCHIVE</p>
+        <h2 class="project__title reveal">Earlier work</h2>
+      </header>
+
+      <div class="project__body">
+        <p class="reveal">
+          Before OA-Tech had a name, it was a kid making things spark. These live
+          on <a href="https://github.com/Ingenieria-Olvera" rel="noopener">my GitHub</a> &mdash;
+          kept public because the growth is the point.
+        </p>
+
+        <ul class="vias reveal">
+          <li><strong>Ionic Wind Generator</strong> &mdash; solid-state propulsion prototype, with drone ambitions</li>
+          <li><strong>Gauss Riffle</strong> &mdash; an electromagnetic accelerator, and the original spark</li>
+          <li><strong>Friday</strong> &mdash; a personal AI assistant in Python, voice and all</li>
+          <li><strong>Hit-Run</strong> &mdash; a movement-first game prototype in C#</li>
+        </ul>
+      </div>
+
+      <p class="lineage reveal">
+        That&rsquo;s the work. Here&rsquo;s the person.
+      </p>
+      <span class="trace-point trace-point--exit" data-trace="exit"></span>
+    </section>
+
+    <!-- ========================================================= ABOUT -->
+    <section class="about" id="about">
+      <span class="trace-point" data-trace="via"></span>
+      <p class="eyebrow mono reveal">ABOUT ME</p>
+      <h2 class="about__title reveal">I love bringing<br />things to life.</h2>
+      <div class="about__body">
+        <p class="reveal">
+          That line has been in my GitHub bio since freshman year, and it&rsquo;s still
+          the most accurate spec sheet I have. I&rsquo;m an electrical and computer
+          engineering student at UMass Amherst. Days, I&rsquo;m on the production floor
+          at CircuitHub keeping the machines that build electronics honest.
+          Nights, I&rsquo;m at my own bench &mdash; which is exactly why this site has a day
+          mode and a night mode.
+        </p>
+        <p class="reveal">
+          I don&rsquo;t stay in my lane, on purpose. The notepad project is electrical
+          and firmware; the bird is mechanical and control theory; the factory
+          work is industrial systems; the club work is protocols. The lane is
+          the passion, not the discipline. When the work is done I play guitar
+          and piano, badly on purpose, because not everything has to ship.
+        </p>
+      </div>
+      <span class="trace-point trace-point--exit" data-trace="exit"></span>
+    </section>
+
+    <!-- ===================================================== FREELANCE -->
+    <section class="freelance" id="freelance">
+      <span class="trace-point" data-trace="via"></span>
+      <span class="via-marker" aria-hidden="true"></span>
+      <p class="eyebrow mono reveal">FREELANCE &middot; AVAILABLE</p>
+      <h2 class="freelance__title reveal">Need something built?</h2>
+      <div class="project__body">
+        <p class="reveal">
+          I take on freelance work where my bench and my day job have already made
+          me useful. Small scope, honest quotes, documented hand-off &mdash; the same
+          standard as everything above.
+        </p>
+        <ul class="vias reveal">
+          <li>PCB design, layout, and design-for-manufacturing review</li>
+          <li>Embedded firmware &mdash; <span class="mono">ESP32 / STM32 / FreeRTOS</span></li>
+          <li>Websites like this one &mdash; designed and built by hand</li>
+        </ul>
+        <p class="freelance__cta reveal">
+          <a class="mono cta-link" href="mailto:jonnyolv102306@gmail.com?subject=Freelance%20inquiry%20%E2%80%94%20OA-Tech">START A CONVERSATION &rarr;</a>
+        </p>
+      </div>
+      <span class="trace-point trace-point--exit" data-trace="exit"></span>
+    </section>
+
+    <!-- ====================================================== OUTRO -->
+    <section class="outro" id="contact">
+      <span class="trace-point" data-trace="outro"></span>
+      <p class="eyebrow mono reveal">END OF TRACE &middot; MORE ON THE BENCH</p>
+      <h2 class="outro__title reveal">The archive is live.<br />The work isn&rsquo;t done.</h2>
+      <p class="outro__body reveal">
+        ClearNote is in bring-up, the bird is learning to stand, and OA-Tech is
+        one maker&rsquo;s practice growing into a firm. If any of this is the kind of
+        work you need &mdash; or you just want to talk shop:
+      </p>
+      <p class="outro__contact reveal">
+        <a class="mono" href="mailto:jonnyolv102306@gmail.com">jonnyolv102306@gmail.com</a>
+      </p>
+      <footer class="site-foot mono reveal">
+        OA-TECH &middot; JONATHAN OLVERA &middot; BUILT BY HAND &middot; <a href="#top">BACK TO TOP &uarr;</a>
+      </footer>
+    </section>
+
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
