@@ -1,8 +1,11 @@
 name: Deploy to GitHub Pages
 
+# Site is intentionally unpublished for now. Deploys are manual-only:
+# GitHub → Actions → "Deploy to GitHub Pages" → Run workflow.
+# To restore deploy-on-push, put the push trigger back:
+#   push:
+#     branches: [main]
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
